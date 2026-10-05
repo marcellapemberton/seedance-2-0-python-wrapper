@@ -1,0 +1,8 @@
+# Seedance 2.0 — Argolink
+
+- Model: seedance-2.0
+- Intent: Python wrapper and polling lifecycle
+- Model page: https://argolink.io/gh-seedance-2-0-python-wrapper
+- API docs: https://argolink.io/gh-unified-api-docs
+- Examples: examples/request.sh, examples/client.py
+- Contract: docs/model-contract.md
