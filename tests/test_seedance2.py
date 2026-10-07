@@ -104,6 +104,26 @@ def test_subscribe_runs_the_job_and_returns_a_fal_shaped_result(server, tmp_path
     assert result["usage"]["billed_seconds"] == 6 and out.read_bytes() == b"MP4BYTES"
 
 
+def test_every_request_names_the_client(server, tmp_path, monkeypatch):
+    seedance2.subscribe("bytedance/seedance-2.0/text-to-video", {"prompt": "a heron"}, output=str(tmp_path / "a.mp4"))
+    assert {headers.get("User-agent") for _, _, _, headers in server.seen} == {seedance2.USER_AGENT}
+
+    picture = tmp_path / "frame.png"
+    picture.write_bytes(b"PNG")
+    sent = []
+
+    def storage(request, timeout=None):
+        sent.append((request.get_method(), dict(request.header_items())))
+        if request.full_url.endswith("/media/uploads"):
+            return Reply(json.dumps({"upload_url": "https://storage.test/put", "media_url": "https://media.test/m"}).encode())
+        return Reply(b"")
+
+    monkeypatch.setattr(seedance2.urllib.request, "urlopen", storage)
+    assert seedance2.Seedance2(api_key="k").upload(str(picture)) == "https://media.test/m"
+    assert [(method, headers["User-agent"]) for method, headers in sent] == [("POST", seedance2.USER_AGENT), ("PUT", seedance2.USER_AGENT)]
+    assert "Authorization" not in sent[1][1]  # the storage PUT never carries the key
+
+
 def test_failed_job_raises_with_the_job_attached(monkeypatch):
     fake = FakeServer(final_status="failed")
     monkeypatch.setattr(seedance2.urllib.request, "urlopen", fake)

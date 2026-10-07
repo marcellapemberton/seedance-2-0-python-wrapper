@@ -33,6 +33,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 __version__ = "1.0.0"
 DEFAULT_BASE_URL = "https://argolink.io/v1"
+USER_AGENT = f"seedance-2-0-python-wrapper/{__version__}"  # sent on every request, uploads included
 
 # USD per output second, read from the model pages on 2026-10-07.
 PRICES: Dict[str, Dict[str, float]] = {
@@ -128,6 +129,7 @@ class Seedance2:
         request = urllib.request.Request(self.base_url + path, method=method,
                                          data=None if body is None else json.dumps(body).encode("utf-8"))
         request.add_header("Authorization", "Bearer " + self.api_key)
+        request.add_header("User-Agent", USER_AGENT)
         if body is not None:
             request.add_header("Content-Type", "application/json")
         try:
@@ -188,6 +190,7 @@ class Seedance2:
         with open(path, "rb") as handle:
             put = urllib.request.Request(ticket["upload_url"], data=handle.read(), method="PUT")
         put.add_header("Content-Type", content_type)  # exactly the declared type, and no API key
+        put.add_header("User-Agent", USER_AGENT)
         urllib.request.urlopen(put, timeout=600).close()
         return ticket["media_url"]
 
